@@ -1,13 +1,7 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.ComponentModel;
-using System.Data;
 using System.Drawing;
-using System.Linq;
 using System.IO;
 using System.Security.Cryptography;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows.Forms;
 
 namespace rensenware_protection
@@ -31,7 +25,7 @@ namespace rensenware_protection
             Check();
         }
 
-        private void Check()
+        private bool Check()
         {
             if (File.Exists(IVFilePath))
             {
@@ -44,61 +38,79 @@ namespace rensenware_protection
                         {
                             Status.ForeColor = Color.LimeGreen;
                             Status.Text = "SAFE for Original Build";
+
+                            return true;
                         }
                     }
             }
+
+            return false;
         }
 
         private void Create_Click(object sender, EventArgs e)
         {
-            if(File.Exists(IVFilePath))
+            try
             {
-                if(File.ReadAllBytes(IVFilePath).Length != 16)
+                if (File.Exists(IVFilePath))
                 {
-                    File.Delete(IVFilePath);
+                    if (File.GetAttributes(IVFilePath) == FileAttributes.Hidden)
+                        File.SetAttributes(IVFilePath, FileAttributes.Normal);
+
+                    if (File.ReadAllBytes(IVFilePath).Length != 16)
+                    {
+                        File.Delete(IVFilePath);
+                    }
+
+                    var _buffer = new byte[16];
+
+                    var randomKey = new RNGCryptoServiceProvider();
+                    randomKey.GetBytes(_buffer);
+                    File.WriteAllBytes(IVFilePath, _buffer);
+                }
+                else
+                {
+                    var _buffer = new byte[16];
+
+                    var randomKey = new RNGCryptoServiceProvider();
+                    randomKey.GetBytes(_buffer);
+                    File.WriteAllBytes(IVFilePath, _buffer);
                 }
 
-                var _buffer = new byte[16];
-
-                var randomKey = new RNGCryptoServiceProvider();
-                randomKey.GetBytes(_buffer);
-                File.WriteAllBytes(IVFilePath, _buffer);
-            }
-            else
-            {
-                var _buffer = new byte[16];
-
-                var randomKey = new RNGCryptoServiceProvider();
-                randomKey.GetBytes(_buffer);
-                File.WriteAllBytes(IVFilePath, _buffer);
-            }
-
-            if (File.Exists(KeyFilePath))
-            {
-                if (File.ReadAllBytes(KeyFilePath).Length != 32)
+                if (File.Exists(KeyFilePath))
                 {
-                    File.Delete(KeyFilePath);
+                    if (File.GetAttributes(KeyFilePath) == FileAttributes.Hidden)
+                        File.SetAttributes(KeyFilePath, FileAttributes.Normal);
+
+                    if (File.ReadAllBytes(KeyFilePath).Length != 32)
+                    {
+                        File.Delete(KeyFilePath);
+                    }
+
+                    var _buffer = new byte[32];
+
+                    var randomKey = new RNGCryptoServiceProvider();
+                    randomKey.GetBytes(_buffer);
+                    File.WriteAllBytes(KeyFilePath, _buffer);
+                }
+                else
+                {
+                    var _buffer = new byte[32];
+
+                    var randomKey = new RNGCryptoServiceProvider();
+                    randomKey.GetBytes(_buffer);
+                    File.WriteAllBytes(KeyFilePath, _buffer);
                 }
 
-                var _buffer = new byte[32];
+                File.SetAttributes(IVFilePath, FileAttributes.Hidden);
+                File.SetAttributes(KeyFilePath, FileAttributes.Hidden);
 
-                var randomKey = new RNGCryptoServiceProvider();
-                randomKey.GetBytes(_buffer);
-                File.WriteAllBytes(KeyFilePath, _buffer);
+                Check();
+
             }
-            else
+            catch
             {
-                var _buffer = new byte[32];
-
-                var randomKey = new RNGCryptoServiceProvider();
-                randomKey.GetBytes(_buffer);
-                File.WriteAllBytes(KeyFilePath, _buffer);
+                MessageBox.Show("There's problem to create pseudo key/iv files.\nTry again with administrator privileges.");
             }
-
-            File.SetAttributes(IVFilePath, FileAttributes.Hidden);
-            File.SetAttributes(KeyFilePath, FileAttributes.Hidden);
-
-            Check();
         }
     }
 }
